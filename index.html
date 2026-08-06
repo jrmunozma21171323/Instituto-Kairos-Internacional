@@ -14,6 +14,7 @@
     --gold:#cf9022;
     --gold-light:#e0a83a;
     --green:#017c33;
+    --teal:#0e6b73;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{
@@ -163,7 +164,7 @@
     text-decoration:none;
     cursor:pointer;
   }
-  .btn span{text-align:left;}
+  .btn span{text-align:center;}
   .btn .icon{width:20px;height:20px;flex:none;}
   .btn strong, .btn b{display:block;font-size:11px;line-height:1.2;}
   .btn small{display:block;font-size:9px;font-weight:500;opacity:.9;line-height:1.3;margin-top:1px;}
@@ -173,6 +174,8 @@
   .btn-gold .icon{color:#fff;}
   .btn-outline{background:var(--navy-btn);color:#fff;border:1px solid rgba(255,255,255,.16);}
   .btn-outline .icon{color:#fff;}
+  .btn-teal{background:var(--teal);color:#fff;}
+  .btn-teal .icon{color:#fff;}
   .btn-pdf{
     background:#fff;
     color:var(--navy);
@@ -323,8 +326,42 @@
   @media (min-width:700px){
     .nav-arrow{width:46px;height:46px;font-size:22px;}
   }
-  @media (max-width:480px){
-    .nav-arrow{display:none;}
+
+  /* ---------------- SWIPE HINT (teaches horizontal navigation) ---------------- */
+  .swipe-hint{
+    position:fixed;
+    left:50%;
+    bottom:52px;
+    transform:translateX(-50%);
+    z-index:21;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:8px 14px;
+    background:rgba(0,0,0,.55);
+    color:#fff;
+    font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.2px;
+    border-radius:20px;
+    backdrop-filter:blur(4px);
+    white-space:nowrap;
+    opacity:0;
+    animation:hintFadeIn .5s ease .6s forwards, hintFadeOut .6s ease 4.4s forwards;
+  }
+  .swipe-hint.hidden{display:none;}
+  .swipe-hint .chevrons{display:inline-flex;}
+  .swipe-hint .chevrons span{
+    display:inline-block;
+    animation:hintSlide 1.1s ease-in-out infinite;
+  }
+  .swipe-hint .chevrons span:nth-child(2){animation-delay:.15s;}
+  @keyframes hintFadeIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes hintFadeOut{from{opacity:1;}to{opacity:0;}}
+  @keyframes hintSlide{
+    0%,100%{transform:translateX(0);opacity:.5;}
+    50%{transform:translateX(4px);opacity:1;}
   }
 </style>
 </head>
@@ -362,13 +399,13 @@
               <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h3l1.5 4-2 1.5a13 13 0 0 0 6 6l1.5-2 4 1.5v3c0 1-1 2-2 2-8 0-14-6-14-14 0-1 1-2 2-2z"/></svg>
               <span><strong>LLAMAR</strong><small>+57 314 557 0285</small></span>
             </a>
-            <a class="btn btn-outline" href="mailto:instituto@kairosglobalvision.org">
+            <a class="btn btn-teal" href="mailto:instituto@kairosglobalvision.org">
               <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M4 6.5 L12 13 L20 6.5"/></svg>
               <span><strong>ENVIAR<br>CORREO</strong><small>instituto@kairosglobalvision.org</small></span>
             </a>
           </div>
 
-          <a class="btn btn-pdf" href="#" id="pdf-download-link" target="_blank" rel="noopener">
+          <a class="btn btn-pdf" href="PRESENTACION_KAIROS.pdf" id="pdf-download-link" target="_blank" rel="noopener">
             <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 2h8l4 4v16H6z" fill="#f4d9d9" stroke="#c0392b" stroke-width="1"/><path d="M14 2v4h4" fill="none" stroke="#c0392b" stroke-width="1"/><text x="7.3" y="16.5" font-size="6.2" font-family="Arial" font-weight="700" fill="#c0392b">PDF</text></svg>
             <span><strong>DESCARGAR CATÁLOGO<br>INSTITUCIONAL (PDF)</strong><small>Información completa de programas y módulos</small></span>
           </a>
@@ -466,6 +503,11 @@
     <button class="dot active" data-slide="0" aria-label="Ir a página 1"></button>
     <button class="dot" data-slide="1" aria-label="Ir a página 2"></button>
   </div>
+
+  <div class="swipe-hint" id="swipeHint">
+    <span>Desliza para ver más</span>
+    <span class="chevrons">&#8249;&#8249;</span>
+  </div>
 </div>
 
 <script>
@@ -477,6 +519,11 @@
   var total = 2;
   var current = 0;
   var startX = 0, startY = 0, deltaX = 0, dragging = false, lockedAxis = null;
+  var swipeHint = document.getElementById('swipeHint');
+
+  function dismissHint(){
+    if (swipeHint) swipeHint.classList.add('hidden');
+  }
 
   function render(){
     slider.style.transform = 'translateX(-' + (current * 50) + '%)';
@@ -488,6 +535,7 @@
   function goTo(index){
     current = Math.max(0, Math.min(total - 1, index));
     render();
+    dismissHint();
   }
 
   dots.forEach(function(d){
@@ -508,6 +556,7 @@
     lockedAxis = null;
     startX = x; startY = y; deltaX = 0;
     slider.style.transition = 'none';
+    dismissHint();
   }
   function onMove(x, y){
     if (!dragging) return;
